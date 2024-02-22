@@ -20,20 +20,32 @@ namespace APICatalogo.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<Categoria>> Get()
         {
-            var categorias = _context.Categorias.ToList();
-
-            if (categorias is null)
+            try
             {
-                return NotFound("Nada encontrado!");
-            }
+                throw new DataMisalignedException();
+                /*
+                var categorias = _context.Categorias.AsNoTracking().ToList();
 
-            return Ok(categorias);
+                if (categorias is null)
+                {
+                    return NotFound("Nada encontrado!");
+                }
+
+                return Ok(categorias);
+                */
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Ocorreu um erro ao tratar a sua solicitação.");
+            }
+            
         }
 
         [HttpGet("produtos")]
         public ActionResult<IEnumerable<Categoria>> GetCategoriasProdutos()
         {
-            return _context.Categorias.Include(p => p.Produtos).ToList();
+            //return _context.Categorias.Include(p => p.Produtos).ToList();
+            return _context.Categorias.Include(p => p.Produtos).Where(c => c.CategoriaId <= 5).ToList();
         }
 
         [HttpGet("{id:int}", Name = "ObterCategoria")]
@@ -43,7 +55,7 @@ namespace APICatalogo.Controllers
 
             if (categoria is null)
             {
-                return NotFound("Categoria não encontrada!");
+                return NotFound($"Categoria com id \"{id}\" não encontrada!");
             }
 
             return Ok(categoria);
@@ -55,7 +67,7 @@ namespace APICatalogo.Controllers
         {
             if(categoria is null)
             {
-                return BadRequest();
+                return BadRequest("Dados inválidos!");
             }
 
             _context.Categorias.Add(categoria);
@@ -69,7 +81,7 @@ namespace APICatalogo.Controllers
         {
             if (id != categoria.CategoriaId)
             {
-                return BadRequest();
+                return BadRequest("Dados inválidos!");
             }
 
             _context.Entry(categoria).State = EntityState.Modified;
@@ -85,7 +97,7 @@ namespace APICatalogo.Controllers
 
             if(categoria is null)
             {
-                return NotFound("Categoria não encontrada!");
+                return NotFound($"Categoria com id \"{id}\" não encontrada!");
             }
 
             _context.Categorias.Remove(categoria);
